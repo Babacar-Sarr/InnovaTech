@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Connexion{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="card shadow-sm">
+        <div class="card-header"><strong>Connexion</strong></div>
+        <div class="card-body">
+          {% if messages %}
+            {% for m in messages %}
+              <div class="alert alert-{{ m.tags|default:'info' }} py-2 my-1">{{ m }}</div>
+            {% endfor %}
+          {% endif %}
+          <form method="post" novalidate>
+            {% csrf_token %}
+            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+            <div class="mb-3">
+              <label class="form-label">Nom d'utilisateur</label>
+              <input class="form-control" type="text" name="username" required autofocus>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Mot de passe</label>
+              <input class="form-control" type="password" name="password" required>
+            </div>
+            <button class="btn btn-primary w-100" type="submit">Se connecter</button>
+          </form>
+
+          <div class="d-flex justify-content-between mt-3 small">
+            {% url 'register' as register_url %}
+            {% if register_url %}
+              <a href="{{ register_url }}">Créer un compte</a>
+            {% endif %}
+            <span class="text-muted"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-control {
+        margin-bottom: 1rem;
+    }
+    .errorlist {
+        color: #dc3545;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+</style>
+{% endblock %}

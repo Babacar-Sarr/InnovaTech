@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+
+{% block title %}Créer un compte{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+
+            <div class="card shadow-lg border-0 rounded-4">
+                
+                <div class="card-header"><strong>Créer un compte</strong></div>
+
+                <div class="card-body p-4">
+
+                    <!-- Barre de progression -->
+                    <div class="progress mb-4" style="height: 8px; border-radius: 4px;">
+                        <div id="progress-bar" class="progress-bar bg-primary" style="width: 33.3%;"></div>
+                    </div>
+
+                    <!-- TITRE ÉTAPE -->
+                    <h5 id="step-title" class="text-center mb-4 fw-bold">
+                        Étape 1 : Informations personnelles
+                    </h5>
+
+                    <form id="multi-step-form" method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+
+                        <!-- ÉTAPE 1 -->
+                        <div class="step" id="step-1">
+                            {% for field in step1_form %}
+                                <div class="form-group">
+                                    <label class="form-label">{{ field.label }}</label>
+                                    {{ field|add_class:"form-control" }}
+                                </div>
+                                {% if field.errors %}
+                                    <div class="text-danger small">{{ field.errors }}</div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        <!-- ÉTAPE 2 -->
+                        <div class="step d-none" id="step-2">
+                            <div class="form-group justify-content-center flex-column text-center">
+                                <label for="id_photo" class="form-label">Photo de profil</label>
+                                {{ step2_form.photo|add_class:"form-control-file" }}
+                                <img id="preview-photo" class="img-thumbnail mt-3 rounded-circle d-none" width="140">
+                            </div>
+                        </div>
+
+                        <!-- ÉTAPE 3 -->
+                        <div class="step d-none" id="step-3">
+                            {% for field in step3_form %}
+                                <div class="form-group">
+                                    <label class="form-label">{{ field.label }}</label>
+                                    {{ field|add_class:"form-control" }}
+                                </div>
+                                {% if field.errors %}
+                                    <div class="text-danger small">{{ field.errors }}</div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        <!-- BOUTONS -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-outline-secondary px-4" id="prev-btn" disabled>
+                                ← Précédent
+                            </button>
+
+                            <button type="button" class="btn btn-primary px-4" id="next-btn">
+                                Suivant →
+                            </button>
+
+                            
+                            <button type="submit" class="btn btn-primary px-4 d-none"  id="submit-btn">
+                                Créer mon compte ✓
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Animation des étapes */
+    .step { animation: fadeIn 0.5s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* Labels fixes et alignement */
+    .form-label {
+        display: inline-block;
+        width: 160px;
+        text-align: right;
+        margin-right: 12px;
+        font-weight: 500;
+    }
+
+    /* Conteneur input + label */
+    .form-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    /* Inputs prennent le reste de la largeur */
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        flex: 1;
+    }
+
+    /* Inputs centrés sur étape photo */
+    #step-2 .form-group {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* Style progress bar */
+    .progress { border-radius: 8px; overflow: hidden; }
+
+    /* Boutons */
+    button { min-width: 130px; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentStep = 1;
+    const steps = 3;
+
+    function showStep(step) {
+        document.querySelectorAll('.step').forEach(s => s.classList.add("d-none"));
+        document.getElementById("step-" + step).classList.remove("d-none");
+
+        document.getElementById("progress-bar").style.width = (step * 100 / steps) + "%";
+
+        const title = document.getElementById("step-title");
+        const titles = [
+            "Étape 1 : Informations personnelles",
+            "Étape 2 : Photo de profil",
+            "Étape 3 : Coordonnées"
+        ];
+        title.innerText = titles[step - 1];
+
+        document.getElementById("prev-btn").disabled = (step === 1);
+        document.getElementById("next-btn").classList.toggle("d-none", step === steps);
+        document.getElementById("submit-btn").classList.toggle("d-none", step !== steps);
+    }
+
+    document.getElementById("next-btn").addEventListener("click", () => {
+        if (currentStep < steps) currentStep++;
+        showStep(currentStep);
+    });
+
+    document.getElementById("prev-btn").addEventListener("click", () => {
+        if (currentStep > 1) currentStep--;
+        showStep(currentStep);
+    });
+
+    // Prévisualisation photo
+    const photoInput = document.querySelector('#id_photo');
+    if(photoInput){
+        photoInput.addEventListener('change', function(e) {
+            const img = document.getElementById("preview-photo");
+            img.src = URL.createObjectURL(e.target.files[0]);
+            img.classList.remove("d-none");
+        });
+    }
+
+    // Initial display
+    showStep(currentStep);
+</script>
+{% endblock %}

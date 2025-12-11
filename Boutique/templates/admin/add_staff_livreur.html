@@ -1,0 +1,12 @@
+<!-- templates/admin_panel/add_staff_livreur.html -->
+<h1>Ajouter un membre Staff ou un Livreur</h1>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    {{ form.as_p }}
+    
+    <button type="submit">Créer le compte</button>
+</form>
+
+<a href="{% url 'ajout' %}">Retour à la liste</a>
