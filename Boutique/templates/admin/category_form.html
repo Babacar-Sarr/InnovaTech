@@ -1,0 +1,126 @@
+{% extends "admin/baseadmin.html" %}
+
+{% block title %}
+    {% if mode == 'update' %}Modifier la catégorie : {{ form.instance.nom }}{% else %}Nouvelle catégorie{% endif %}
+{% endblock %}
+
+{% block header %}
+    {% if mode == 'update' %}Modification : {{ form.instance.nom }}{% else %}Créer une Nouvelle Catégorie{% endif %}
+{% endblock %}
+
+{% block content %}
+
+{# Remplacement des classes de centrage/limitation par un conteneur simple #}
+<div class="container-fluid p-0"> 
+    
+    <form method="post" class="card shadow-lg border-0">
+        {% csrf_token %}
+        
+        <div class="card-header bg-white border-bottom p-4">
+            <h5 class="mb-0 text-dark fw-bold">
+                <i class="fa-solid fa-tags me-2 text-primary"></i> 
+                Informations Générales
+            </h5>
+            {% if form.instance.pk %}
+                <p class="small text-muted mb-0">Modification de la catégorie #{{ form.instance.pk }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="card-body p-4 p-md-5">
+            
+            {# Affichage des erreurs non liées à un champ #}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger border-0 shadow-sm">
+                    <i class="fa-solid fa-circle-exclamation me-2"></i>
+                    Veuillez corriger les erreurs suivantes :
+                    <ul>
+                        {% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <h6 class="text-primary mb-3">Détails de base</h6>
+            <div class="row g-4 mb-4">
+                
+                {# Nom de la Catégorie #}
+                <div class="col-12 col-lg-6"> 
+                    <label for="{{ form.nom.id_for_label }}" class="form-label fw-bold">{{ form.nom.label }}</label>
+                    {{ form.nom }}
+                    {% if form.nom.help_text %}<div class="form-text">{{ form.nom.help_text }}</div>{% endif %}
+                    {% for e in form.nom.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                </div>
+                
+                {# Catégorie Parent #}
+                <div class="col-12 col-lg-6"> 
+                    <label for="{{ form.parent.id_for_label }}" class="form-label fw-bold">{{ form.parent.label }}</label>
+                    {{ form.parent }}
+                    {% if form.parent.help_text %}<div class="form-text">{{ form.parent.help_text }}</div>{% endif %}
+                    {% for e in form.parent.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                </div>
+                
+                {# Slug #}
+                <div class="col-12 col-lg-6">
+                    <label for="{{ form.slug.id_for_label }}" class="form-label fw-bold">{{ form.slug.label }}</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-link"></i></span>
+                        {{ form.slug }}
+                    </div>
+                    {% if form.slug.help_text %}<div class="form-text">{{ form.slug.help_text }}</div>{% endif %}
+                    {% for e in form.slug.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                </div>
+                
+                {# Icône #}
+                <div class="col-12 col-lg-6">
+                    <label for="{{ form.icon.id_for_label }}" class="form-label fw-bold">{{ form.icon.label }}</label>
+                    <div class="input-group">
+                         <span class="input-group-text"><i class="fa-solid fa-star"></i></span>
+                        {{ form.icon }}
+                    </div>
+                    {% if form.icon.help_text %}<div class="form-text">{{ form.icon.help_text }}</div>{% endif %}
+                    {% for e in form.icon.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                </div>
+
+            </div>
+            
+            <hr class="my-4">
+
+            <h6 class="text-primary mb-3">Description (SEO)</h6>
+            <div class="row g-4 mb-4">
+
+                {# Description (Pleine largeur) #}
+                <div class="col-12">
+                    <label for="{{ form.description.id_for_label }}" class="form-label fw-bold">{{ form.description.label }}</label>
+                    {{ form.description }}
+                    {% if form.description.help_text %}<div class="form-text">{{ form.description.help_text }}</div>{% endif %}
+                    {% for e in form.description.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                </div>
+
+            </div>
+
+            <hr class="my-4">
+
+            <h6 class="text-primary mb-3">Visibilité</h6>
+            <div class="form-check form-switch mb-3">
+                {{ form.is_active }}
+                <label class="form-check-label fw-bold" for="{{ form.is_active.id_for_label }}">
+                    {{ form.is_active.label }}
+                </label>
+                {% if form.is_active.help_text %}<div class="form-text">{{ form.is_active.help_text }}</div>{% endif %}
+                {% for e in form.is_active.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            
+        </div>
+        
+        <div class="card-footer d-flex justify-content-end gap-2 p-4">
+            <a class="btn btn-outline-secondary" href="{% url 'admin_categories' %}">
+                <i class="fa-solid fa-xmark me-2"></i>Annuler
+            </a>
+            <button class="btn btn-primary fw-bold" type="submit">
+                <i class="fa-solid fa-floppy-disk me-2"></i> 
+                {% if mode == 'update' %}Sauvegarder les modifications{% else %}Enregistrer la catégorie{% endif %}
+            </button>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

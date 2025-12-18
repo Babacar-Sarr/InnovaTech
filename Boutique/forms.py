@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
 from .models import Produit, Categorie, UserProfile, RoleChoices, Adresse
+from django.utils.text import slugify
 
 User = get_user_model()
 class RegisterStep1Form(UserCreationForm):
@@ -113,20 +114,98 @@ class ProduitForm(BootstrapModelForm):
                 self.add_error('prix_promo', 'Le prix promo ne peut pas dépasser le prix.')
         return cleaned
 
+# forms.py
+
+from django import forms
+from .models import Categorie # Assurez-vous d'importer votre modèle correctement
+
 class CategorieForm(forms.ModelForm):
+    """
+    Formulaire pour la création et la modification d'une catégorie.
+    Utilise ModelForm pour simplifier la création des champs.
+    """
+    
+    # Champ parent : Utilise ModelChoiceField pour une meilleure sélection
+    # On exclut la catégorie en cours d'édition (instance) pour éviter les boucles infinies.
+    parent = forms.ModelChoiceField(
+        queryset=Categorie.objects.all().order_by('nom'),
+        required=False, # Une catégorie n'a pas besoin d'avoir de parent
+        empty_label="-- Catégorie Principale --",
+        label="Catégorie Parent"
+    )
+
     class Meta:
         model = Categorie
-        fields = ['nom', 'description', 'icon']
-        labels = {
-            'nom': 'Nom',
-            'description': 'Description',
-            'icon': 'Icône (classe FontAwesome)',
-        }
+        fields = [
+            'nom', 
+            'slug', 
+            'parent', 
+            'description', 
+            'icon', 
+            'is_active'
+        ]
+        
+        # Widgets personnalisés pour améliorer l'apparence
         widgets = {
-            'nom': forms.TextInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
-            'icon': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'ex: fa-solid fa-tag'}),
+            'nom': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Téléphones & Smartphones'}),
+            'slug': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Laissez vide pour générer automatiquement'}),
+            'parent': forms.Select(attrs={'class': 'form-select'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Description détaillée pour le SEO...'}),
+            'icon': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: fas fa-mobile-alt'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+        
+    def __init__(self, *args, **kwargs):
+        """Initialisation personnalisée pour exclure la catégorie elle-même de la liste 'parent'."""
+        super().__init__(*args, **kwargs)
+        
+        # Exclure l'instance actuelle (si c'est une modification) de la liste des parents possibles
+        if self.instance.pk:
+            # Récupère l'ID de l'instance en cours d'édition
+            current_id = self.instance.pk
+            
+            # Filtre le queryset du champ 'parent' pour exclure l'instance en cours
+            self.fields['parent'].queryset = Categorie.objects.exclude(pk=current_id).order_by('nom')
+        
+        # Appliquer les classes Bootstrap à tous les champs (sauf le Checkbox)
+        for name, field in self.fields.items():
+            if name != 'is_active' and not isinstance(field.widget, forms.Select):
+                 # Les widgets text/textarea/number/etc.
+                field.widget.attrs.setdefault('class', 'form-control')
+            elif isinstance(field.widget, forms.Select):
+                # Le widget Select pour le parent
+                field.widget.attrs.setdefault('class', 'form-select')
+
+
+    def clean_slug(self):
+        """
+        Nettoie et assure que le slug est généré/mis à jour s'il n'est pas fourni.
+        """
+        slug = self.cleaned_data.get('slug')
+        nom = self.cleaned_data.get('nom')
+        
+        # Si le slug est vide, on le génère à partir du nom
+        if not slug and nom:
+            # Utilisation de slugify du modèle (ou de django.utils.text.slugify)
+            slug = slugify(nom)
+            
+        return slug
+
+    def clean(self):
+        """
+        Validation personnalisée pour vérifier qu'une catégorie ne peut pas être son propre parent.
+        (Bien que l'__init__ s'en charge dans le widget, cette validation est plus sûre).
+        """
+        cleaned_data = super().clean()
+        parent = cleaned_data.get("parent")
+
+        # Si nous sommes en modification (instance.pk existe)
+        if self.instance.pk and parent and parent.pk == self.instance.pk:
+            raise forms.ValidationError(
+                "Une catégorie ne peut pas être sa propre catégorie parent."
+            )
+            
+        return cleaned_data
 
 class LivreurCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -277,6 +356,7 @@ class StaffLivreurCreationForm(UserCreationForm):
         ],
         initial=RoleChoices.STAFF # Valeur par défaut dans le formulaire
     )
+    
 
     class Meta(UserCreationForm.Meta):
         model = User
@@ -288,6 +368,11 @@ class StaffLivreurCreationForm(UserCreationForm):
 
         # Crée l'objet UserProfile lié à l'utilisateur
         role_choice = self.cleaned_data.get('role')
+        if role_choice == RoleChoices.STAFF:
+             user.is_staff = True
+        else:
+            user.is_staff = False
+        user.save()
         
         # Utilisez self.instance si vous modifiez un utilisateur existant, 
         # mais pour la création, user est l'objet que nous venons de créer.

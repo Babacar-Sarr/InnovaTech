@@ -1,89 +1,287 @@
-{% extends "admin/base.html" %}
+{% extends "admin/baseadmin.html" %}
 {% block title %}Admin | Tableau de bord{% endblock %}
 {% block header %}Tableau de bord{% endblock %}
+
 {% block content %}
-<div class="row g-3">
-  <div class="col-sm-6 col-lg-3">
-    <div class="card shadow-sm"><div class="card-body d-flex justify-content-between">
-      <div><div class="text-muted small text-uppercase">Produits</div><div class="fs-4 fw-bold">{{ total_products }}</div></div>
-      <i class="fa-solid fa-box-open fa-2x text-primary"></i>
-    </div></div>
-  </div>
-  <div class="col-sm-6 col-lg-3">
-    <div class="card shadow-sm"><div class="card-body d-flex justify-content-between">
-      <div><div class="text-muted small text-uppercase">Commandes</div><div class="fs-4 fw-bold">{{ total_orders }}</div></div>
-      <i class="fa-solid fa-basket-shopping fa-2x text-success"></i>
-    </div></div>
-  </div>
-  <div class="col-sm-6 col-lg-3">
-    <div class="card shadow-sm"><div class="card-body d-flex justify-content-between">
-      <div><div class="text-muted small text-uppercase">Utilisateurs</div><div class="fs-4 fw-bold">{{ total_users }}</div></div>
-      <i class="fa-solid fa-users fa-2x text-info"></i>
-    </div></div>
-  </div>
-  <div class="col-sm-6 col-lg-3">
-    <div class="card shadow-sm"><div class="card-body d-flex justify-content-between">
-      <div><div class="text-muted small text-uppercase">Revenus</div><div class="fs-4 fw-bold">{{ revenue|floatformat:0 }} F</div></div>
-      <i class="fa-solid fa-coins fa-2x text-warning"></i>
-    </div></div>
-  </div>
+
+<div class="row g-4 mb-4">
+    
+    <div class="col-sm-6 col-md-4 col-lg-3">
+        <div class="card border-0 shadow-lg h-100 p-2">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small text-uppercase mb-1 fw-bold">Revenus Totaux</div>
+                    <div class="fs-2 fw-bolder text-danger">{{ revenue|floatformat:0|default:0 }} F</div>
+                    <p class="small text-muted mb-0">Total depuis le début</p>
+                </div>
+                <div class="p-3 rounded-circle bg-danger-subtle text-danger">
+                    <i class="fa-solid fa-sack-dollar fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-sm-6 col-md-4 col-lg-3">
+        <div class="card border-0 shadow-lg h-100 p-2">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small text-uppercase mb-1 fw-bold">Nouvelles Commandes</div>
+                    <div class="fs-2 fw-bolder text-warning">{{ total_orders|default:0 }}</div>
+                    <p class="small text-muted mb-0">À traiter immédiatement</p>
+                </div>
+                <div class="p-3 rounded-circle bg-warning-subtle text-warning">
+                    <i class="fa-solid fa-clipboard-list fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-sm-6 col-md-4 col-lg-3">
+        <div class="card border-0 shadow-lg h-100 p-2">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small text-uppercase mb-1 fw-bold">Nouveaux Clients (30j)</div>
+                    <div class="fs-2 fw-bolder text-success">{{ total_users|default:0 }}</div>
+                    <p class="small text-muted mb-0">Inscription du dernier mois</p>
+                </div>
+                <div class="p-3 rounded-circle bg-success-subtle text-success">
+                    <i class="fa-solid fa-user-plus fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-sm-6 col-md-4 col-lg-3">
+        <div class="card border-0 shadow-lg h-100 p-2">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small text-uppercase mb-1 fw-bold">Note Produit Moyenne</div>
+                    <div class="fs-2 fw-bolder text-info">{{ average_rating|floatformat:1 |default:0}} <span class="fs-5">/ 5</span></div>
+                    <p class="small text-muted mb-0">{{ total_notes | default:0 }} avis</p>
+                </div>
+                <div class="p-3 rounded-circle bg-info-subtle text-info">
+                    <i class="fa-solid fa-star fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="row g-3 mt-1">
-  <div class="col-lg-7">
-    <div class="card shadow-sm h-100">
-      <div class="card-header bg-white fw-semibold">Commandes (par jour)</div>
-      <div class="card-body"><canvas id="ordersChart" height="120"></canvas></div>
+<div class="row g-4 mt-2">
+    
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-lg h-100">
+            <div class="card-header bg-white border-0 pt-4 fw-semibold fs-5 text-dark">
+                Tendance des Ventes (7 derniers jours)
+            </div>
+            <div class="card-body p-4">
+                <canvas id="salesAndOrdersChart" height="150"></canvas>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="col-lg-5">
-    <div class="card shadow-sm h-100">
-      <div class="card-header bg-white fw-semibold">Top produits</div>
-      <div class="card-body">
-        <ol class="mb-0">
-          {% for p in top_products %}
-            <li class="mb-1 d-flex justify-content-between">
-              <span>{{ p.produit__nom }}</span><span class="text-muted">{{ p.qty }}</span>
-            </li>
-          {% empty %}<div class="text-muted">Aucune donnée.</div>{% endfor %}
-        </ol>
-      </div>
+    
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-lg h-100">
+            <div class="card-header bg-white border-0 pt-4 fw-semibold fs-5 text-dark d-flex justify-content-between align-items-center">
+                Livraisons en cours 
+                <span class="badge text-bg-primary rounded-pill">{{ total_deliveries_in_progress }}</span>
+            </div>
+            <div class="card-body p-0">
+                <div id="deliveryMap" style="height: 300px; background-color: #e9ecef; border-radius: 0 0 .5rem .5rem; display: flex; align-items: center; justify-content: center;">
+                    <span class="text-muted small">Intégration de la carte (Google Maps/Leaflet)</span>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
-<div class="card shadow-sm mt-3">
-  <div class="card-header bg-white fw-semibold">Dernières commandes</div>
-  <div class="table-responsive">
-    <table class="table align-middle mb-0">
-      <thead><tr><th>#</th><th>Client</th><th>Date</th><th>Statut</th><th class="text-end">Total (F)</th></tr></thead>
-      <tbody>
-        {% for c in recent_orders %}
-          <tr>
-            <td>{{ c.id }}</td>
-            <td>{{ c.user.get_full_name|default:c.user.username }}</td>
-            <td>{{ c.date_commande|date:"d/m/Y H:i" }}</td>
-            <td><span class="badge text-bg-light">{{ c.statut }}</span></td>
-            <td class="text-end">{{ c.total|default:'—' }}</td>
-          </tr>
-        {% empty %}
-          <tr><td colspan="5" class="text-center text-muted py-4">Aucune commande.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+<div class="row g-4 mt-2">
+    
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-lg h-100">
+            <div class="card-header bg-white border-0 pt-4 fw-semibold fs-5 text-dark">Derniers Avis et Notes (Faible)</div>
+            <div class="card-body p-4">
+                <ul class="list-unstyled mb-0 d-grid gap-3">
+                    {% for note in recent_low_notes %}
+                        <li class="d-flex align-items-start border-bottom pb-3">
+                            <i class="fa-solid fa-circle-exclamation text-danger me-3 mt-1 fs-5"></i>
+                            <div>
+                                <span class="fw-bold d-block text-primary">{{ note.produit.nom }}</span>
+                                <span class="small text-dark fst-italic fw-medium">"{{ note.commentaire|truncatechars:50 }}"</span>
+                                <div class="mt-1">
+                                    {% for i in "12345"|make_list %}
+                                        <i class="fa-solid fa-star small {% if i|add:0 <= note.valeur %}text-warning{% else %}text-secondary{% endif %}"></i>
+                                    {% endfor %}
+                                    <span class="small text-muted ms-2">par {{ note.user.username }}</span>
+                                </div>
+                            </div>
+                        </li>
+                    {% empty %}
+                        <div class="alert alert-success my-3 border-0 shadow-sm"><i class="fa-solid fa-check-circle me-2"></i>Aucun avis faible récent. Bravo !</div>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-lg h-100">
+            <div class="card-header bg-white border-0 pt-4 fw-semibold fs-5 text-dark">Top 5 des Catégories Populaires</div>
+            <div class="card-body p-4">
+                <ul class="list-group list-group-flush">
+                    {% for cat in top_categories %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <div>
+                                <i class="{{ cat.icon }} me-3 text-primary"></i>
+                                <span class="fw-medium text-dark">{{ cat.nom }}</span>
+                            </div>
+                            <span class="badge text-bg-primary rounded-pill">{{ cat.total_products }} produits</span>
+                        </li>
+                    {% empty %}
+                        <div class="alert alert-info my-3 border-0">Aucune donnée de catégorie.</div>
+                    {% endfor %}
+                </ul>
+                <div class="mt-3 text-end">
+                    <a href="#" class="btn btn-sm btn-outline-primary">Gérer les catégories</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-lg mt-4">
+    <div class="card-header bg-white border-0 pt-4 fw-semibold fs-5 text-dark">Détail des Dernières Commandes</div>
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th># Commande</th>
+                    <th>Client</th>
+                    <th>Date</th>
+                    <th>Statut</th>
+                    <th>Total</th>
+                    <th class="text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in recent_orders|slice:":10" %}
+                    <tr>
+                        <td class="fw-bold text-primary">#{{ c.id }}</td>
+                        <td>
+                            <i class="fa-regular fa-user me-1 text-muted"></i> 
+                            {{ c.user.get_full_name|default:c.user.username }}
+                        </td>
+                        <td class="small text-muted">{{ c.date_commande|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            {% if c.statut == 'LIVREE' %}
+                                <span class="badge text-bg-success rounded-pill">Livrée</span>
+                            {% elif c.statut == 'EN_COURS' %}
+                                <span class="badge text-bg-warning rounded-pill">En Cours</span>
+                            {% elif c.statut == 'EN_ATTENTE' %}
+                                <span class="badge text-bg-info rounded-pill">En Attente</span>
+                            {% elif c.statut == 'ANNULEE' %}
+                                <span class="badge text-bg-danger rounded-pill">Annulée</span>
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold text-dark">{{ c.total|floatformat:2 }} F</td>
+                        <td class="text-center">
+                            <a href="#" class="btn btn-sm btn-outline-primary" title="Voir les détails">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-5">Aucune commande récente à afficher.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-const labels = {{ chart_days|safe }};
-const counts = {{ chart_counts|safe }};
-new Chart(document.getElementById('ordersChart'), {
-  type: 'line',
-  data: { labels, datasets: [{ data: counts, label: 'Commandes', borderColor:'#0d6efd', backgroundColor:'rgba(13,110,253,.1)', tension:.3, fill:true }]},
-  options: { plugins:{legend:{display:false}}, scales:{ y:{ beginAtZero:true, ticks:{precision:0}}}}
+// Nécessite que ces contextes soient passés par la vue Django:
+// total_orders_7_days, revenue_7_days, chart_days
+const chart_labels = {{ chart_days|safe }}; 
+const orders_counts = {{ total_orders_7_days|safe }};
+const revenue_data = {{ revenue_7_days|safe }};
+
+// --- Adaptation des couleurs au baseadmin.html ---
+// Fonction pour obtenir la couleur CSS (var(--primary-accent))
+const getPrimaryColor = () => getComputedStyle(document.documentElement).getPropertyValue('--primary-accent').trim() || '#0077c9';
+// Couleur Danger (standard) pour les revenus
+const getDangerColor = () => '#dc3545'; 
+
+const primaryColor = getPrimaryColor();
+const dangerColor = getDangerColor();
+
+new Chart(document.getElementById('salesAndOrdersChart'), {
+    type: 'line',
+    data: { 
+        labels: chart_labels, 
+        datasets: [
+            { 
+                label: 'Commandes', 
+                data: orders_counts, 
+                borderColor: primaryColor, 
+                backgroundColor: 'rgba(0, 119, 201, 0.1)', 
+                yAxisID: 'y1', 
+                borderWidth: 2,
+                pointRadius: 4,
+                tension: 0.4, 
+                fill: true 
+            },
+            { 
+                label: 'Revenus (F)', 
+                data: revenue_data, 
+                borderColor: dangerColor, 
+                backgroundColor: 'rgba(220, 53, 69, 0.1)', 
+                yAxisID: 'y2', 
+                borderWidth: 2,
+                pointRadius: 4,
+                tension: 0.4, 
+                fill: false 
+            }
+        ]
+    },
+    options: { 
+        responsive: true,
+        maintainAspectRatio: false, 
+        plugins: {
+            legend: { 
+                display: true, 
+                position: 'bottom',
+                labels: {
+                    usePointStyle: true,
+                    boxWidth: 8
+                }
+            }
+        }, 
+        scales: { 
+            y1: { 
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: { display: true, text: 'Commandes' },
+                grid: { drawOnChartArea: false } 
+            },
+            y2: { 
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: { display: true, text: 'Revenus (F)' },
+                grid: { drawOnChartArea: true, color: '#f0f0f0' },
+                ticks: {
+                    callback: function(value) { return value.toLocaleString() + ' F'; }
+                }
+            },
+            x: {
+                grid: { display: false }
+            }
+        }
+    }
 });
 </script>
 {% endblock %}

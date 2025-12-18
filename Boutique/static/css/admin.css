@@ -1,0 +1,3 @@
+.admin-sidebar { width: 260px; min-height: 100vh; }
+.admin-sidebar .nav-link { color: #333; }
+.admin-sidebar .nav-link.active, .admin-sidebar .nav-link:hover { background: #f3f4f6; }

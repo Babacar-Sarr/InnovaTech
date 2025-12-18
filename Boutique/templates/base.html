@@ -2,180 +2,177 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Ecommerce{% endblock %}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}InnovaTech Shop{% endblock %}</title>
 
-  <link rel="icon" type="image/x-icon" href="{% static 'assets/favicon.ico' %}">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="{% static 'css/styles.css' %}" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
-  
-  {% block extra_css %}{% endblock %}
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-blue: #0056b3; /* Ton bleu principal */
+        }
+
+        body { font-family: 'Poppins', sans-serif; margin: 0; background-color: #fff; }
+
+        /* --- Conteneur Navbar Ultra-Précis --- */
+        .custom-navbar {
+            display: flex;
+            align-items: center; /* Aligne tout verticalement au centre */
+            justify-content: space-between; /* Espace le logo, le menu et les boutons */
+            padding: 15px 5%;
+            background: #fff;
+            border-bottom: 1px solid #f0f0f0;
+            flex-wrap: nowrap; 
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);/* Empêche le retour à la ligne */
+        }
+
+        /* Logo noir (Style Sadibou) */
+        .brand-logo {
+            background-color: #1a1a1a;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            min-width: fit-content;
+        }
+
+        /* Menu Central */
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 25px; /* Espace entre les liens */
+        }
+        /* Soulignement élégant au survol */
+        .nav-link-custom {
+            color: #1a1a1a;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            padding-bottom: 5px; /* Espace pour le trait */
+            border-bottom: 2px solid transparent; /* Prépare la bordure */
+            transition: all 0.3s ease; /* Animation fluide */
+        }
+
+        .nav-link-custom:hover, .nav-link-custom.active {
+            color: var(--primary-blue);
+            border-bottom: 2px solid var(--primary-blue); /* Affiche le trait bleu */
+            text-shadow: 0 0 8px rgba(0, 86, 179, 0.6), 0 0 15px rgba(0, 86, 179, 0.3);
+        }
+
+        
+
+        /* Groupe de Boutons à Droite */
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Espace entre les boutons */
+        }
+
+        /* Bouton Bleu Plein (Anciennement Jaune) */
+        /* Bouton Plein (Connexion) - Brillance au survol */
+.btn-blue-fill {
+    background-color: var(--primary-blue);
+    color: white !important;
+    padding: 10px 25px;
+    border-radius: 10px;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    white-space: nowrap;
+    transition: all 0.3s ease; /* Transition fluide */
+}
+
+.btn-blue-fill:hover {
+    /* Crée un halo bleu intense autour du bouton */
+    box-shadow: 0 0 15px rgba(0, 86, 179, 0.7);
+    transform: translateY(-1px); /* Petit effet de levée */
+}
+
+/* Boutons Outlined (Inscription, Favoris, Panier) */
+.btn-outline-custom {
+    border: 1.5px solid var(--primary-blue);
+    color: #1a1a1a !important;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-custom:hover {
+    background-color: rgb(31, 31, 31);
+    color: white !important;
+    /* Effet de brillance sur la bordure */
+    box-shadow: 0 0 12px rgba(0, 86, 179, 0.5);
+    border-color: rgba(0, 86, 179, 1);
+}
+
+        /* Badge Panier */
+        .badge-blue {
+            background-color: var(--primary-blue);
+            font-size: 0.7rem;
+        }
+    </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
-    <div class="container">
-      <a class="navbar-brand" href="{% url 'home' %}">InnovaTech Shop</a>
 
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Menu">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="collapse navbar-collapse" id="mainNav">
-
-        <ul class="navbar-nav ms-3">
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'home' %}">Accueil</a>
-          </li>
-
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="shopDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              Boutique
-            </a>
-            <ul class="dropdown-menu" aria-labelledby="shopDropdown">
-              <li><a class="dropdown-item" href="#">Tous les produits</a></li>
-              <li><a class="dropdown-item" href="#">Plus populaires</a></li>
-              <li><a class="dropdown-item" href="#">Nouveautés</a></li>
-            </ul>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'about' %}">À propos</a>
-          </li>
-        </ul>
-
-        <div class="ms-auto d-flex align-items-center">
-
-          {% if user.is_authenticated %}
-            <div class="nav-item dropdown me-3">
-              <a class="nav-link dropdown-toggle d-flex align-items-center" href="#"
-                 id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-
-                {% if user.userprofile.avatar %}
-                  <img src="{{ user.userprofile.photo.url }}"
-                       alt="Profile" class="rounded-circle me-2"
-                       style="width: 32px; height: 32px; object-fit: cover;">
-                {% else %}
-                  <i class="fas fa-user-circle fa-2x me-2"></i>
-                {% endif %}
-                <span>{{ user.username }}</span>
-              </a>
-
-              <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userDropdown">
-                <li class="dropdown-header">
-                  <h6 class="mb-0">{{ user.get_full_name|default:user.username }}</h6>
-                  <small class="text-muted">{{ user.email }}</small>
-                </li>
-                <li><hr class="dropdown-divider"></li>
-
-                {% if user.is_staff %}
-                  <li><a class="dropdown-item" href="#"><i class="fas fa-gauge-high fa-fw me-2"></i> Panneau admin</a></li>
-                  <li><a class="dropdown-item" href="#"><i class="fas fa-box-open fa-fw me-2"></i> Gérer les produits</a></li>
-                  <li><hr class="dropdown-divider"></li>
-                {% endif %}
-
-                {% if request.user.is_authenticated %}
-                  <li><h6 class="dropdown-header">{{ request.user.username }}</h6></li>
-
-                  {% with role=request.user.userprofile.role|default:'' %}
-                    {% if request.user.is_staff %}
-                      <li><a class="dropdown-item" href="#">Panneau admin</a></li>
-                      <li><a class="dropdown-item" href="#">Gérer les produits</a></li>
-                      <li><hr class="dropdown-divider"></li>
-                      <li><a class="dropdown-item" href="#">Mon profil</a></li>
-                      <li><a class="dropdown-item" href="#">Tableau de bord</a></li>
-                    {% elif role == 'LIVREUR' %}
-                      <li><a class="dropdown-item" href="#">Tableau de bord</a></li>
-                      <li><a class="dropdown-item" href="#">Mon profil</a></li>
-                    {% else %}
-                      <li><a class="dropdown-item" href="{% url 'home' %}">Tableau de bord</a></li>
-                      <li><a class="dropdown-item" href="#">Mon profil</a></li>
-                      <li><a class="dropdown-item" href="#">Mes commandes</a></li>
-                    {% endif %}
-                  {% endwith %}
-
-                  <li><a class="dropdown-item" href="#">Changer le mot de passe</a></li>
-                  <li><hr class="dropdown-divider"></li>
-                  <li>
-                    <form method="post" action="{% url 'logout' %}">{% csrf_token %}
-                      <button class="dropdown-item text-danger" type="submit">Déconnexion</button>
-                    </form>
-                  </li>
-                {% endif %}
-              </ul>
-            </div>
-          {% else %}
-            <a class="btn btn-dark me-2" href="{% url 'login' %}">Connexion</a>
-            <a class="btn btn-outline-dark" href="{% url 'register' %}">Inscription</a>
-          {% endif %}
-
-          <a class="btn btn-outline-dark position-relative me-3" href="#">
-            <i class="bi bi-cart3"></i><span class="ms-1">Panier</span>
-            <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark cart-count" style="display:none">
-              {{ cart_count|default:0 }}
-            </span>
-          </a>
+<header class="custom-navbar">
+    <a class="brand-logo" href="{% url 'home' %}">
+        <i class="fas fa-tshirt me-2"></i>
+        <div style="line-height: 1.2;">
+            <span style="font-weight: 800; font-size: 1.1rem; display: block;">INNOVATECH</span>
+            <span style="font-size: 0.6rem; letter-spacing: 1px; color: #ccc;">MODE & TENDANCES</span>
         </div>
-      </div>
+    </a>
+
+    <nav class="nav-menu">
+        <a href="{% url 'home' %}" class="nav-link-custom ">Accueil</a>
+        <a href="#" class="nav-link-custom">Boutique</a>
+        <a href="{% url 'about' %}" class="nav-link-custom ">À propos</a>
+        <a href="#" class="nav-link-custom"><i class="bi bi-headset me-1 text-primary"></i>Support</a>
+    </nav>
+
+    <div class="nav-actions">
+        {% if not user.is_authenticated %}
+            <a href="{% url 'login' %}" class="btn-blue-fill">Connexion</a>
+            <a href="{% url 'register' %}" class="btn-outline-custom">Inscription</a>
+        {% else %}
+             <a href="#" class="btn-blue-fill"><i class="bi bi-person"></i> {{ user.username }}</a>
+        {% endif %}
+        
+        <a href="#" class="btn-outline-custom">
+            <i class="bi bi-heart-fill"></i> Favoris
+        </a>
+
+        <a href="#" class="btn-outline-custom position-relative">
+            <i class="bi bi-cart3"></i> Panier
+            <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill badge-blue">
+                {{ cart_count|default:0 }}
+            </span>
+        </a>
     </div>
-  </nav>
+</header>
 
-  <div class="container mt-3">
-    {% if messages %}
-      <div>
-        {% for message in messages %}
-          <div class="alert alert-{{ message.tags|default:'info' }} mb-2">{{ message }}</div>
-        {% endfor %}
-      </div>
-    {% endif %}
-  </div>
-
-  <main>
+<main class="container mt-4">
     {% block content %}{% endblock %}
-  </main>
+</main>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-  <script>
-    (function() {
-      function getCookie(name) {
-        const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
-        return m ? m.pop() : '';
-      }
-      const csrftoken = getCookie('csrftoken');
-      const cartEls = document.querySelectorAll('#cart-count, .cart-count');
-
-      window.updateCartBadge = function(count) {
-        const n = Number(count) || 0;
-        cartEls.forEach(el => {
-          el.textContent = n;
-          el.style.display = n > 0 ? 'inline' : 'none';
-          el.setAttribute('aria-label', `Articles au panier: ${n}`);
-        });
-      };
-
-      window.ajouterAuPanier = async function(productId, url) {
-        try {
-          const endpoint = url || '/panier/add/';
-          const res = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRFToken': csrftoken,
-              'X-Requested-With': 'XMLHttpRequest',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({ product_id: productId, quantity: 1 })
-          });
-          const data = await res.json();
-          if (typeof data.cart_count !== 'undefined') updateCartBadge(data.cart_count);
-          return false;
-        } catch (e) { console.error(e); return false; }
-      };
-    })();
-  </script>
-
-  {% block extra_js %}{% endblock %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

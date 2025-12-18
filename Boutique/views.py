@@ -246,6 +246,7 @@ def dashboard(request):
 
 def post_login_redirect(request):
     """Redirection après connexion"""
+    return redirect('dashboard')
 def register(request):
     if request.method == "POST":
         form1 = RegisterStep1Form(request.POST)
@@ -315,34 +316,190 @@ class StaffLivreurCreateView(CreateView):
 # ===================================================================
 # VUE POUR LE STAFF
 # ===================================================================
-@admin_required
-def admin_dashboard(request):
-    """Tableau de bord administrateur"""
-    total_products = Produit.objects.count()
-    total_orders = Commande.objects.count()
-    total_users = User.objects.count()
-    revenue = Commande.objects.aggregate(total=Sum('total'))['total'] or 0
+import json
+from datetime import date, timedelta
+from django.db.models import Sum, Count, Avg
+from django.db.models.functions import TruncDate
+from django.shortcuts import render
+from django.contrib.auth.models import User # Assurez-vous d'importer le modèle User si ce n'est pas déjà fait
+# Importez vos modèles Commande, Produit, Avis (ou Note), Categorie, CommandeItem
+# Exemple (ajustez les noms de modèles à votre structure) :
+from .models import Commande, Produit, Avis, Categorie, CommandeItem 
 
-    per_day = (
-        Commande.objects
-        .annotate(day=TruncDate('date_commande'))
-        .values('day')
-        .annotate(c=Count('id'))
-        .order_by('day')
+@admin_required # Assurez-vous que le décorateur est défini
+def admin_dashboard(request):
+    # ==========================================================
+    # 1. Calculs des indicateurs principaux (Cards en haut)
+    # ==========================================================
+    today = timezone.now()
+    last_30_days = today - timedelta(days=30)
+    
+    # Revenus Totaux (Déjà présent)
+    revenue = Commande.objects.filter(statut='LIVREE').aggregate(total=Sum('total'))['total'] or 0
+
+    # Nouvelles Commandes (EN_ATTENTE ou EN_COURS)
+    total_pending_orders = Commande.objects.filter(statut__in=['EN_ATTENTE', 'EN_COURS']).count()
+    
+    # Nouveaux Clients (30j). Adaptez 'date_joined' au champ de date de création de votre modèle User.
+    new_users_30days = User.objects.filter(date_joined__gte=last_30_days).count()
+    
+    # Note Produit Moyenne
+    # Supposons que votre modèle de notation s'appelle 'Avis' ou 'Note'
+    rating_stats = Avis.objects.aggregate(avg=Avg('valeur'), count=Count('id'))
+    average_rating = rating_stats['avg'] or 0
+    total_notes = rating_stats['count']
+    
+    # ==========================================================
+    # 2. Données pour le graphique (7 derniers jours)
+    # ==========================================================
+    last_7_days = today - timedelta(days=6) # On veut 7 jours (d-6 à d)
+    
+    # Filtrer les commandes des 7 derniers jours
+    recent_sales = Commande.objects.filter(
+        date_commande__date__gte=last_7_days, 
+        statut='LIVREE' # On ne compte que les commandes livrées/payées pour les revenus
+    ).order_by('date_commande__date')
+    
+    # Aggrégation par jour
+    sales_data = recent_sales.annotate(day=TruncDate('date_commande__date')).values('day').annotate(
+        orders_count=Count('id'),
+        daily_revenue=Sum('total')
     )
+
+    # Préparer les données pour le JS (remplir les jours sans commandes)
+    chart_days = []
+    orders_counts = []
+    revenue_data = []
+    
+    # Créer un dictionnaire pour un accès facile
+    sales_by_day = {item['day']: item for item in sales_data}
+    
+    for i in range(7):
+        day = last_7_days + timedelta(days=i)
+        day_str = day.strftime('%d/%m')
+        
+        chart_days.append(day_str)
+        
+        data = sales_by_day.get(day, {'orders_count': 0, 'daily_revenue': 0})
+        orders_counts.append(data['orders_count'])
+        revenue_data.append(data['daily_revenue'] or 0)
+
+
+    # ==========================================================
+    # 3. Données pour les autres blocs
+    # ==========================================================
+    
+    # Livraisons en cours (Supposons que 'EN_COURS' est utilisé pour la livraison)
+    total_deliveries_in_progress = Commande.objects.filter(statut='EN_COURS').count()
+
+    # Derniers Avis/Notes faibles (ex: Note < 3/5)
+    # Assurez-vous que 'produit' est une ForeignKey vers Produit et 'user' vers User
+    recent_low_notes = Avis.objects.filter(valeur__lt=3).select_related('produit', 'user').order_by('-date_avis')[:5]
+
+    # Top 5 Catégories Populaires (par nombre de produits vendus dans cette catégorie)
+    top_categories = Categorie.objects.annotate(
+        total_products=Count('produits__commandeitem__quantite')
+    ).order_by('-total_products')[:5]
+
+    # Dernières Commandes (Déjà présent)
+    recent_orders = Commande.objects.order_by('-date_commande')[:10]
+
+
     context = {
-        'total_products': total_products,
-        'total_orders': total_orders,
-        'total_users': total_users,
+        # Indicateurs principaux
         'revenue': revenue,
-        'chart_days': json.dumps([d['day'].strftime('%d/%m') for d in per_day]),
-        'chart_counts': json.dumps([d['c'] for d in per_day]),
-        'top_products': (
-            CommandeItem.objects
-            .values('produit__nom')
-            .annotate(qty=Sum('quantite'))
-            .order_by('-qty')[:5]
-        ),
-        'recent_orders': Commande.objects.order_by('-date_commande')[:10],
+        'total_pending_orders': total_pending_orders,
+        'new_users_30days': new_users_30days,
+        'average_rating': average_rating,
+        'total_notes': total_notes,
+        
+        # Graphique (MAJ pour correspondre aux noms dans le template)
+        'chart_days': json.dumps(chart_days),
+        'total_orders_7_days': json.dumps(orders_counts), # Renommé pour correspondre au template
+        'revenue_7_days': json.dumps(revenue_data),       # Renommé pour correspondre au template
+        
+        # Autres blocs
+        'total_deliveries_in_progress': total_deliveries_in_progress,
+        'recent_low_notes': recent_low_notes,
+        'top_categories': top_categories,
+        'recent_orders': recent_orders,
     }
     return render(request, 'admin/dashboard.html', context)
+@admin_required
+def admin_categories(request):
+    """Gestion des catégories"""
+    categories = Categorie.objects.all().order_by('nom')
+    return render(request, 'admin/categories.html', {'categories': categories})
+@staff_required
+def admin_category_create(request):
+    """Création d'une catégorie"""
+    form = CategorieForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, "Catégorie créée avec succès.")
+        return redirect('admin_categories')
+    return render(request, 'admin/category_form.html', {'form': form, 'mode': 'create'})
+@staff_required
+def admin_category_update(request, pk):
+    """Modification d'une catégorie"""
+    categorie = get_object_or_404(Categorie, pk=pk)
+    form = CategorieForm(request.POST or None, instance=categorie)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, "Catégorie modifiée avec succès.")
+        return redirect('admin_categories')
+    return render(request, 'admin/category_form.html', {'form': form, 'mode': 'update', 'categorie': categorie})
+
+@staff_required
+def admin_category_delete(request, pk):
+    """Suppression d'une catégorie via POST (Modale)"""
+    categorie = get_object_or_404(Categorie, pk=pk)
+    
+    if request.method == 'POST':
+        nom_cat = categorie.nom
+        categorie.delete()
+        messages.error(request, f'La catégorie "{nom_cat}" a été définitivement supprimée.')
+    
+    return redirect('admin_categories')
+@admin_required
+def admin_products(request):
+    """Gestion des produits"""
+    qs = Produit.objects.all().order_by('-date_creation')
+    paginator = Paginator(qs, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return render(request, 'admin/products.html', {
+        'produits': page_obj.object_list,
+        'page_obj': page_obj,
+        'total_count': qs.count(),
+    })
+@staff_required
+def admin_product_create(request):
+    """Création d'un produit"""
+    form = ProduitForm(request.POST or None, request.FILES or None)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, "Produit créé avec succès.")
+        return redirect('admin_products')
+    return render(request, 'admin/product_form.html', {'form': form, 'mode': 'create'})
+@staff_required
+def admin_product_update(request, pk):
+    """Modification d'un produit"""
+    produit = get_object_or_404(Produit, pk=pk)
+    form = ProduitForm(request.POST or None, request.FILES or None, instance=produit)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, "Produit modifié avec succès.")
+        return redirect('admin_products')
+    return render(request, 'admin/product_form.html', {'form': form, 'mode': 'update', 'produit': produit})
+
+@staff_required
+def admin_product_delete(request, pk):
+    """Suppression d'un produit"""
+    produit = get_object_or_404(Produit, pk=pk)
+    if request.method == 'POST':
+        produit.delete()
+        messages.success(request, "Produit supprimé.")
+        return redirect('admin_products')
+@staff_required
+def admin_commande(request):
+    return render(request, 'admin/commandes.html')

@@ -7,14 +7,73 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models import Avg
+from django.utils.text import slugify
 
 
 class Categorie(models.Model):
-    nom = models.CharField(max_length=100, unique=True)
-    description = models.TextField(blank=True, null=True)
-    icon = models.CharField(max_length=50, default='fas fa-folder')  # Classe FontAwesome par défaut
+    """
+    Modèle de catégorie amélioré avec support hiérarchique (Parent/Enfant) et SEO.
+    """
     
+    # 1. Champs de base
+    nom = models.CharField(max_length=100, unique=True, verbose_name="Nom de la Catégorie" )
+    # 2. ESSENTIEL POUR LE SEO ET L'URL
+    slug = models.SlugField(max_length=100, unique=True, blank=True, verbose_name="Slug (URL Friendly)", help_text="Clé unique utilisée dans l'URL (ex: electronique-telephones)." )
+   # 3. POUR LA HIERARCHIE (ARBORESCENCE)
+    parent = models.ForeignKey(
+        'self', # Référence à la classe elle-même
+        null=True,
+        blank=True,
+        related_name='enfants', # Pour obtenir les sous-catégories
+        on_delete=models.CASCADE,
+        verbose_name="Catégorie Parent"
+    )
+    
+    # 4. Description et Affichage
+    description = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Description détaillée (SEO)"
+    )
+    
+    icon = models.CharField(
+        max_length=50,
+        default='fas fa-folder',
+        verbose_name="Icône (Classe FontAwesome)"
+    )
+    
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Est active"
+    )
+    
+    class Meta:
+        verbose_name = "Catégorie"
+        verbose_name_plural = "Catégories"
+        ordering = ['nom']
+
     def __str__(self):
+        # Affichage plus clair dans l'administration
+        if self.parent:
+            return f"{self.parent.nom} > {self.nom}"
+        return self.nom
+
+    def save(self, *args, **kwargs):
+        """Génère le slug si le champ est vide ou s'il s'agit d'un nouvel enregistrement."""
+        if not self.slug or not self.pk:
+            # Création du slug à partir du nom
+            self.slug = slugify(self.nom)
+            
+        super().save(*args, **kwargs)
+
+    # ----------------------------------------------------
+    # Propriété Utile : Chemin complet
+    # ----------------------------------------------------
+    @property
+    def full_path(self):
+        """Retourne le chemin complet de la catégorie (ex: Électronique/Téléphones)."""
+        if self.parent:
+            return f"{self.parent.full_path}/{self.nom}"
         return self.nom
 
 
@@ -178,5 +237,12 @@ class Adresse(models.Model):
     def __str__(self):
         label = self.nom or self.destinataire
         return f"{label} - {self.ligne1}, {self.ville}"
+class Avis(models.Model):
+    produit = models.ForeignKey(Produit, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    valeur = models.IntegerField(default=5) # La note (ex: 1 à 5)
+    commentaire = models.TextField(blank=True)
+    date_avis = models.DateTimeField(auto_now_add=True)
 
-
+    def __str__(self):
+        return f'{self.produit.nom} - {self.valeur}/5'

@@ -1,0 +1,180 @@
+{% extends "admin/baseadmin.html" %}
+
+{% block title %}
+    Admin | {% if mode == 'update' %}Modifier {{ form.instance.nom }}{% else %}Nouveau Produit{% endif %}
+{% endblock %}
+{% block header %}
+<div class="d-flex align-items-center">
+    <i class="fa-solid fa-arrow-left text-primary"></i>
+    {% if mode == 'update' %}Modifier le produit{% else %}Ajouter un produit{% endif %}
+    
+</div>
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid px-0">
+    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h5 class="mb-0 fw-bold"><i class="fa-solid fa-circle-info me-2 text-primary"></i>Informations générales</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        {% if form.non_field_errors %}
+                            {% for e in form.non_field_errors %}
+                                <div class="alert alert-danger">{{ e }}</div>
+                            {% endfor %}
+                        {% endif %}
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">{{ form.nom.label }}</label>
+                            {{ form.nom }}
+                            {% for error in form.nom.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">{{ form.description.label }}</label>
+                            {{ form.description }}
+                            {% for error in form.description.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label fw-bold">{{ form.prix.label }}</label>
+                                <div class="input-group">
+                                    {{ form.prix }}
+                                    <span class="input-group-text bg-light fw-bold">FCFA</span>
+                                </div>
+                                {% for error in form.prix.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label fw-bold">{{ form.prix_promo.label }} <small class="text-muted fw-normal">(Optionnel)</small></label>
+                                <div class="input-group">
+                                    {{ form.prix_promo }}
+                                    <span class="input-group-text bg-light fw-bold text-danger">PROMO</span>
+                                </div>
+                                {% for error in form.prix_promo.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h5 class="mb-0 fw-bold"><i class="fa-solid fa-tags me-2 text-primary"></i>Catégorisation</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-0">
+                            <label class="form-label fw-bold">Sélectionner les catégories</label>
+                            {{ form.categories }}
+                            <div class="form-text mt-2"><i class="fa-solid fa-circle-question me-1"></i> Maintenez Ctrl (ou Cmd) pour sélectionner plusieurs catégories.</div>
+                            {% for error in form.categories.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h5 class="mb-0 fw-bold"><i class="fa-solid fa-image me-2 text-primary"></i>Image du produit</h5>
+                    </div>
+                    <div class="card-body p-4 text-center">
+                        <div class="preview-container mb-3 border rounded-3 bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            {% if form.instance.image %}
+                                <img src="{{ form.instance.image.url }}" id="imgPreview" class="img-fluid rounded shadow-sm" style="max-height: 100%; object-fit: contain;">
+                            {% else %}
+                                <div id="noImg" class="text-center text-muted">
+                                    <i class="fa-solid fa-cloud-arrow-up fa-3x mb-2 opacity-25"></i>
+                                    <p class="small mb-0">Aucun fichier sélectionné</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="upload-btn-wrapper">
+                            {{ form.image }}
+                        </div>
+                        {% for error in form.image.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+
+                {% if mode == 'update' %}
+                <div class="card border-0 shadow-sm mb-4 bg-primary text-white">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small opacity-75">Note moyenne</span>
+                            <span class="fw-bold">{{ form.instance.note_moyenne|floatformat:1 }}/5</span>
+                        </div>
+                        <div class="progress bg-white bg-opacity-25" style="height: 6px;">
+                            <div class="progress-bar bg-white" style="width: '{% widthratio form.instance.note_moyenne 5 100 %}' "></div>
+                        </div>
+                        <div class="mt-3 small">
+                            <i class="fa-solid fa-comment-dots me-1"></i> Basé sur {{ form.instance.nombre_notes }} avis clients
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="card border-0 shadow-sm sticky-top" style="top: 100px;">
+                    <div class="card-body p-4 text-center">
+                        <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold mb-3 shadow-sm rounded-pill">
+                            <i class="fa-solid fa-floppy-disk me-2"></i> Enregistrer
+                        </button>
+                        <a href="{% url 'admin_products' %}" class="btn btn-light border w-100 rounded-pill fw-bold">
+                            Annuler
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-accent);
+        box-shadow: 0 0 0 0.25rem rgba(0, 119, 201, 0.1);
+    }
+    
+    .breadcrumb-item a { text-decoration: none; color: inherit; }
+    .breadcrumb-item.active { color: var(--primary-accent); font-weight: 600; }
+
+    /* Style spécifique pour le champ file de Bootstrap */
+    input[type="file"]::file-selector-button {
+        background-color: #f8f9fa;
+        color: #333;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 4px 12px;
+        margin-right: 10px;
+        cursor: pointer;
+    }
+
+    /* Multi-select styling */
+    .form-select[multiple] {
+        padding: 10px;
+        background-image: none;
+    }
+</style>
+
+<script>
+    // Prévisualisation instantanée de l'image
+    document.querySelector('input[type="file"]').onchange = function(evt) {
+        const [file] = this.files;
+        if (file) {
+            const preview = document.getElementById('imgPreview');
+            const noImg = document.getElementById('noImg');
+            
+            if (preview) {
+                preview.src = URL.createObjectURL(file);
+            } else {
+                const container = document.querySelector('.preview-container');
+                container.innerHTML = `<img src="${URL.createObjectURL(file)}" id="imgPreview" class="img-fluid rounded shadow-sm" style="max-height: 100%; object-fit: contain;">`;
+            }
+        }
+    };
+</script>
+{% endblock %}
